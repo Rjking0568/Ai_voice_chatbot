@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Voice Chatbot </title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>AI Voice Chatbot </h2>
+        <textarea id="user_input" placeholder="My self, Raj Barnawal and I am here to be your friend. So, great to have you here. What’s on your mind?"></textarea>
+        <button onclick="sendMessage()">🚀 Send</button>
+        <button onclick="startSpeechRecognition()">🎤 Speak</button> 
+        <p id="response"></p>
+        <audio id="audioPlayer" controls></audio>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById("user_input").value;
+            let responseElement = document.getElementById("response");
+            let audioPlayer = document.getElementById("audioPlayer");
+
+            fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                responseElement.textContent = data.response;
+                if (data.audio) {
+                    let audioBlob = new Blob([new Uint8Array(data.audio.match(/../g).map(h => parseInt(h, 16)))], { type: 'audio/mpeg' });
+                    let audioURL = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioURL;
+                    audioPlayer.play();
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function startSpeechRecognition() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US"; 
+            recognition.start();
+
+            recognition.onresult = function(event) {
+                document.getElementById("user_input").value = event.results[0][0].transcript;
+            };
+
+            recognition.onerror = function(event) {
+                console.error("Speech recognition error:", event.error);
+            };
+        }
+    </script>
+</body>
+</html>
